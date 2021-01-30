@@ -44,7 +44,56 @@ const GITHUB_ACCESS_TOKEN_FOR_USER_URL = 'https://api.github.com/user';
 //the authenticate methods is passed a code which has been sent by github
 //if successful it will return a token which identifies a user in this app
 User.authenticate = async (code) => {
-  throw 'nooooo';
+  try {
+    let response = await axios.post(
+      'https://github.com/login/oauth/access_token',
+      {
+        code: code,
+        client_id: process.env.GITHUB_CLIENT_ID,
+        client_secret: process.env.GITHUB_CLIENT_SECRET,
+      },
+      {
+        headers: {
+          accept: 'application/json',
+        },
+      }
+    );
+
+    if (response.data.error) {
+      const error = Error(data.error);
+      error.status = 401;
+      throw error;
+    }
+
+    // console.log('token information', response.data);
+    const access_token = response.data.access_token;
+    // console.log('access_token,', access_token);
+
+    const userinfo = await axios.get('https://api.github.com/user', {
+      headers: {
+        authorization: `token ${access_token}`,
+      },
+    });
+    // console.log('user information', userinfo);
+
+    let user = await User.findOne({
+      where: {
+        githubId: userinfo.data.id,
+      },
+    });
+    if (!user) {
+      user = await User.create({
+        username: userinfo.data.login,
+        githubId: userinfo.data.id,
+      });
+    }
+    // console.log(user);
+    const signed = jwt.sign({ id: user.id }, process.env.JWT);
+    // console.log(signed);
+    return signed;
+  } catch (ex) {
+    console.log(ex);
+  }
 };
 
 const syncAndSeed = async () => {
