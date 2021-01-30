@@ -2,7 +2,7 @@ const axios = require('axios');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const Sequelize = require('sequelize');
-const { STRING, INTEGER } = Sequelize;
+const { STRING, INTEGER, JSON } = Sequelize;
 const config = {
   logging: false,
 };
@@ -18,6 +18,7 @@ const conn = new Sequelize(
 const User = conn.define('user', {
   username: STRING,
   githubId: INTEGER,
+  data: JSON,
 });
 
 User.byToken = async (token) => {
@@ -85,6 +86,7 @@ User.authenticate = async (code) => {
       user = await User.create({
         username: userinfo.data.login,
         githubId: userinfo.data.id,
+        data: userinfo.data,
       });
     }
     // console.log(user);

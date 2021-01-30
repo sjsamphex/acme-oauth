@@ -48,6 +48,7 @@
         }
         componentDidMount() {
           this.exchangeTokenForUser();
+          console.log(this.state);
         }
         async login(credential) {
           const { token } = (await axios.post('/api/auth', credential)).data;
